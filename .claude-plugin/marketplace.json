@@ -1,0 +1,21 @@
+{
+  "name": "karen",
+  "owner": {
+    "name": "kleer001"
+  },
+  "metadata": {
+    "description": "Karen — design-quality code review for Claude Code (SOLID, DRY, KISS, YAGNI, code smells)",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "karen",
+      "description": "Design-quality review skill — flags SOLID violations, true DRY duplication, premature abstraction, weak naming, hidden coupling, and other maintainability hazards in recent changes. Distinct from correctness review.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./"
+      ]
+    }
+  ]
+}
