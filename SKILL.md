@@ -241,7 +241,7 @@ Triggered by `--jury` anywhere in the args. Default jury size is **3**; an integ
 
 2. **Spawn N reviewer subagents in parallel** (a single message with N parallel `Agent` tool calls). Each subagent gets identical instructions:
 
-   > Read `/home/menser/.claude/skills/karen/SKILL.md` and apply the rubric to the diff at <scope>. Read the project's CLAUDE.md before reviewing. Read each changed file end-to-end, not just the diff hunks. Honor the anti-rubric (no correctness bugs, no style nits, no adjacent code, no speculative abstraction) and the project-pattern consistency rule. Produce the karen report in the exact format the skill specifies — VERDICT line, then findings grouped by severity. Do NOT modify any files; this is read-only. Return ONLY the karen report.
+   > Read `${CLAUDE_PLUGIN_ROOT}/SKILL.md` and apply the rubric to the diff at <scope>. Read the project's CLAUDE.md before reviewing. Read each changed file end-to-end, not just the diff hunks. Honor the anti-rubric (no correctness bugs, no style nits, no adjacent code, no speculative abstraction) and the project-pattern consistency rule. Produce the karen report in the exact format the skill specifies — VERDICT line, then findings grouped by severity. Do NOT modify any files; this is read-only. Return ONLY the karen report.
 
    Use `subagent_type: "general-purpose"` so each reviewer has Read, Bash, and Grep access. Spawning all N in one message is critical — sequential spawning defeats the parallelism win.
 
