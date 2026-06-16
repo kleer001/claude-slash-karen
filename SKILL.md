@@ -1,6 +1,6 @@
 ---
 name: karen
-description: Review recent code changes for design-quality and maintainability issues — SOLID violations, true DRY duplication (rule of three), premature abstraction (YAGNI/KISS), weak naming, hidden coupling, long object chains (Law of Demeter), unrequested fallbacks, magic numbers, comment rot, and similar code smells. Distinct from /code-review (which targets correctness bugs) — karen targets design, sustainability, and clean-code principles, not "is it buggy." Supports `--jury [N]` (default N=3) for high-stakes multi-reviewer consensus with synthesized output. Use whenever the user invokes /karen, asks to review code for SOLID, DRY, design quality, code smells, maintainability, sustainability, or readability, or asks whether recent changes are clean, well-engineered, or following good design — even when they don't say "SOLID" or "DRY" explicitly. Backronym KAREN = Keeping Architecture Readable, Extensible & Neat.
+description: Review recent code changes for design-quality and maintainability issues — SOLID violations, true DRY duplication (rule of three), premature abstraction (YAGNI/KISS), weak naming, hidden coupling, long object chains (Law of Demeter), unrequested fallbacks, magic numbers, comment rot, and similar code smells. Distinct from /code-review (which targets correctness bugs) — karen targets design, sustainability, and clean-code principles, not "is it buggy." Supports `--jury [N]` (default N=3) for high-stakes multi-reviewer consensus with synthesized output, and `--go` to auto-apply the findings to the working tree (like /simplify) instead of only reporting them. Use whenever the user invokes /karen, asks to review code for SOLID, DRY, design quality, code smells, maintainability, sustainability, or readability, or asks whether recent changes are clean, well-engineered, or following good design — even when they don't say "SOLID" or "DRY" explicitly. Backronym KAREN = Keeping Architecture Readable, Extensible & Neat.
 ---
 
 # Karen
@@ -46,7 +46,10 @@ Examples:
 - `/karen 3` → last three commits
 - `/karen HEAD~5` → last five commits (base-ref form)
 
-The `--jury` flag (optional, may appear anywhere in the args) switches to multi-reviewer consensus mode — see `## Jury mode` below. Strip it from the args before parsing scope.
+Two optional flags may appear anywhere in the args; strip both before parsing scope:
+
+- `--jury [N]` switches to multi-reviewer consensus mode — see `## Jury mode` below.
+- `--go` applies the report's findings to the working tree instead of stopping at the report — see `## Go mode` below. `--jury` and `--go` compose: the jury produces the synthesized report, then Go mode applies it.
 
 ### 2. Read with full context — not just the diff
 
@@ -291,6 +294,42 @@ Without synthesis, jury mode is just an expensive drift study — the user gets 
 - Each reviewer is ~50–70k tokens and ~30–60s. N=3 ≈ 200k tokens and ~60s wall time; N=5 ≈ 350k and ~90s.
 - Skip jury for: small diffs (under ~50 changed lines), iterative dev loops where you're running karen repeatedly, environments without subagent support (e.g., Claude.ai).
 - Reach for jury for: large diffs (200+ lines, 5+ files), pre-merge reviews, refactors that touch architecture, anything where one reviewer's miss is genuinely costly.
+
+---
+
+## Go mode (optional)
+
+Triggered by `--go` anywhere in the args. By default Karen is read-only and stops at the report; `--go` makes her **apply the findings** to the working tree after reporting, the way `/simplify` does. Use it when you trust Karen's calibration and want the fixes done rather than transcribed.
+
+### Workflow
+
+1. **Produce the report first, in full.** Run the normal single-pass review (or, with `--jury`, the synthesized consensus report). Print the complete `VERDICT` + severity-grouped findings before changing anything — the user sees the reasoning and can map each edit back to a finding.
+
+2. **Apply every finding in the report**, across all severities — Critical, Should-fix, Consider, and Nit. For each finding, make the change described in its `Suggestion` line and nothing more:
+
+   - **Apply the concrete primary suggestion, not optional embellishments.** If a finding says "convert to dict-dispatch; *optionally* lift it out so renderers self-register," apply the dispatch and skip the optional part.
+   - **A `leave as-is if X` finding applies nothing** when the condition holds — that finding resolved to no change. State that in the summary.
+   - **Stay surgical.** Touch only what the finding requires. Go mode does not license the drive-by edits Karen's own rubric (item 11) flags — applying a finding means the smallest edit that resolves it.
+   - **Do not fix correctness as a side effect.** If implementing a design fix surfaces a bug, note it and refer to `/code-review`; don't silently repair it.
+
+3. **Do not re-run the rubric on your own edits.** Go mode applies the findings already reported; it does not start a fresh review of the resulting tree (that would loop). If the user wants another pass, they re-run `/karen`.
+
+4. **Summarize what changed.** After applying, print a short summary:
+
+   ```
+   Applied N of M findings:
+   - `path/to/file.py:42` · DIP — injected connector as a parameter
+   - `path/to/file.py:88` · naming — renamed `data` → `parsed_invoice`
+   Skipped (no change needed):
+   - `path/to/file.py:14` · single-use — resolved to leave-as-is (helper names a concept)
+   ```
+
+   Karen applied design refactors that can change behavior; the edits are **unverified**. End the summary by saying so and recommending the user review the diff and run their tests.
+
+### Cost / when not to use
+
+- Go mode is most predictable on diffs whose findings are local (naming, magic-literal, comment-rot, single-use inlining). Structural findings (DIP injection, SRP splits, OCP dispatch) ripple into callers and tests — applying them is a real refactor, not a cleanup. On a finding set that is mostly structural, prefer reporting first (plain `/karen`) and applying by hand.
+- Pairing with `--jury` raises confidence before auto-applying: the consensus report has already dropped noise, so `--jury --go` applies a higher-signal finding set than `--go` alone.
 
 ---
 

@@ -39,8 +39,20 @@ Scope and jury size are independent. Jury mode costs 3–5× a single pass — r
 
 Karen also triggers on phrases like "review this for SOLID/DRY", "is this clean?", "any code smells?", or "is this well-engineered?" — even without the word `/karen`.
 
+### Go mode
+
+Add `--go` to apply the findings to your working tree after reporting, the way `/simplify` does:
+
+| Command | What it does |
+|---|---|
+| `/karen --go` | Review uncommitted changes, then apply every finding |
+| `/karen origin/main --go` | Review vs `origin/main`, then apply |
+| `/karen --jury --go` | Jury synthesizes a consensus report, then applies it |
+
+Karen prints the full report first, then applies all findings (Critical through Nit) and summarizes what changed. The edits are unverified — review the diff and run your tests afterward. `--go` applies design refactors (which can touch behavior), so it's most predictable on local findings (naming, magic literals, single-use inlining); pair it with `--jury` for a higher-signal finding set before auto-applying.
+
 ## Output
 
-A `VERDICT` line followed by findings grouped by severity (`## Critical`, `## Should-fix`, `## Consider`, `## Nit`). Read-only — Karen never modifies your files.
+A `VERDICT` line followed by findings grouped by severity (`## Critical`, `## Should-fix`, `## Consider`, `## Nit`). Read-only by default — Karen modifies files only when you pass `--go`.
 
 See [`SKILL.md`](SKILL.md) for the full rubric, anti-rubric, and behavioral spec.

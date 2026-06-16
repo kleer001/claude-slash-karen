@@ -22,7 +22,8 @@ README.md                      # User-facing docs
 - Karen reviews *design quality*, not correctness — she explicitly does NOT flag bugs, style nits, adjacent untouched code, or speculative abstractions.
 - Scope parsing: no arg → uncommitted changes; a ref → `HEAD..<ref>`; an integer N → last N commits.
 - `--jury [N]` (default 3) may appear anywhere in the args; strip it before scope parsing. It runs N independent reviewers and synthesizes one consensus report.
-- Read-only: Karen never modifies files.
+- `--go` (may appear anywhere in the args; strip before scope parsing) applies the report's findings to the working tree after reporting, like `/simplify`. Composes with `--jury` (jury synthesizes, then Go mode applies).
+- Read-only by default — Karen never modifies files unless `--go` is passed.
 - Output is a `VERDICT` line followed by findings grouped by severity (Critical / Should-fix / Consider / Nit).
 
 ## Distribution note
