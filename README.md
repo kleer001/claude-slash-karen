@@ -4,7 +4,7 @@ A [Claude Code](https://claude.ai/code) skill for **design-quality** code review
 
 > **KAREN** = **K**eeping **A**rchitecture **R**eadable, **E**xtensible & **N**eat.
 
-Karen reviews recent changes for sustainability and clean-code principles — SOLID violations, true DRY duplication (rule of three), premature abstraction (YAGNI/KISS), weak naming, hidden coupling, long object chains (Law of Demeter), unrequested fallbacks, magic numbers, and comment rot.
+Karen reviews recent changes for sustainability and clean-code principles — SOLID violations, true DRY duplication (two copies are the limit), premature abstraction (YAGNI/KISS), weak naming, hidden coupling, long object chains (Law of Demeter), unrequested fallbacks, magic numbers, and comment rot.
 
 Karen assumes the code probably runs. She answers **"will this still be readable, extensible, and neat in six months?"** — *not* "is it buggy." For correctness bugs, use `/code-review` instead.
 

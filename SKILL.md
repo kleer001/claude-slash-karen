@@ -1,6 +1,6 @@
 ---
 name: karen
-description: Review recent code changes for design-quality and maintainability issues — SOLID violations, true DRY duplication (rule of three), premature abstraction (YAGNI/KISS), weak naming, hidden coupling, long object chains (Law of Demeter), unrequested fallbacks, magic numbers, comment rot, and similar code smells. Distinct from /code-review (which targets correctness bugs) — karen targets design, sustainability, and clean-code principles, not "is it buggy." Supports `--jury [N]` (default N=3) for high-stakes multi-reviewer consensus with synthesized output, and `--go` to auto-apply the findings to the working tree (like /simplify) instead of only reporting them. Use whenever the user invokes /karen, asks to review code for SOLID, DRY, design quality, code smells, maintainability, sustainability, or readability, or asks whether recent changes are clean, well-engineered, or following good design — even when they don't say "SOLID" or "DRY" explicitly. Backronym KAREN = Keeping Architecture Readable, Extensible & Neat.
+description: Review recent code changes for design-quality and maintainability issues — SOLID violations, true DRY duplication (two copies are the limit), premature abstraction (YAGNI/KISS), weak naming, hidden coupling, long object chains (Law of Demeter), unrequested fallbacks, magic numbers, comment rot, and similar code smells. Distinct from /code-review (which targets correctness bugs) — karen targets design, sustainability, and clean-code principles, not "is it buggy." Supports `--jury [N]` (default N=3) for high-stakes multi-reviewer consensus with synthesized output, and `--go` to auto-apply the findings to the working tree (like /simplify) instead of only reporting them. Use whenever the user invokes /karen, asks to review code for SOLID, DRY, design quality, code smells, maintainability, sustainability, or readability, or asks whether recent changes are clean, well-engineered, or following good design — even when they don't say "SOLID" or "DRY" explicitly. Backronym KAREN = Keeping Architecture Readable, Extensible & Neat.
 ---
 
 # Karen
@@ -67,7 +67,7 @@ Run linearly through `## Rubric` below. Don't force findings — most items will
 
 Many users' broader engineering philosophy (often in their global `CLAUDE.md`) heavily emphasizes:
 
-- **No premature abstraction.** Three near-identical lines are *better* than a wrapper extracted "in case." Karen flags DRY only at three+ occurrences, or when the duplication encodes a single piece of knowledge that *must* change in lockstep.
+- **No premature abstraction.** A wrapper, base class or hook extracted "in case", with one caller, costs more than it saves. A shared helper with two callers is not premature: it removes a copy (rubric item 7).
 - **No unrequested fallbacks.** A `try/except` that papers over a missing file by creating it is a Karen-flag, not a defensive virtue.
 - **Surgical scope.** Drive-by edits to unrelated code, "while I'm here" cleanups, or renaming adjacent things are a Karen-flag.
 - **One path, fail loudly.** Karen *flags* defensive code for impossible states (null checks the type system rules out, error handlers for exceptions the called code cannot raise).
@@ -76,7 +76,8 @@ Many users' broader engineering philosophy (often in their global `CLAUDE.md`) h
 
 When a new instance of a pattern matches the project's *existing* posture (other call sites in the same repo already do it this way), suppress the finding unless one of these is true:
 
-- The new instance is the **third or later** occurrence of the pattern (rule of three: at that point the pattern is entrenched enough to fix together).
+- The finding is DRY. A copy of existing code is never compliance with the project's posture; rubric item 7 sets when Karen flags it.
+- The new instance is the **third or later** occurrence of the pattern: at that point the pattern is entrenched enough to fix together.
 - The project's own CLAUDE.md (global or repo-level) **explicitly prohibits** the pattern, in which case the existing instances are bugs that just haven't been fixed yet.
 
 Stylistic consistency with the surrounding code is a real signal — code that matches its neighbors is easier to read, search, and maintain than code that announces "I tried to do better here." If the project has clearly chosen a posture (even one Karen would have argued against on a greenfield review), a new instance that matches isn't a finding; it's compliance.
@@ -109,7 +110,7 @@ Use the format in `## Output Contract` below.
 
 6. **True duplication.** "DRY" applies to duplicated *knowledge*, not duplicated *shape*. *Flag:* the same validation rule expressed in two places (must update both for correctness); the same magic constant repeated; the same business formula re-derived. *Don't flag:* two loops that happen to look alike but encode different concepts — coincidental shape isn't shared knowledge.
 
-7. **Rule of three.** Two near-identical blocks are usually fine — extracting a helper for two callers often costs more (indirection, naming burden) than it saves. Flag DRY only at *three+ occurrences*, or when a change *must* land in N places to remain correct.
+7. **Two copies are the limit.** Two copies of the same knowledge are a *Consider*, or a *Should-fix* when a change must land in both to stay correct. Three or more copies are a *Should-fix*. Suggest one shared helper, with a parameter for each difference between the copies. A shared helper with two callers is not a single-use abstraction (item 10).
 
 ### Simplicity guardrails
 
@@ -349,7 +350,7 @@ def get_user_email(user):
 
 **Karen flags:** single-use abstractions / YAGNI / KISS. Each wrapper replaces one attribute access with a function call — no abstraction benefit. Inline them; if the access ever needs validation or formatting, *then* extract.
 
-### Example 2 — would NOT flag
+### Example 2 — would flag (Consider)
 
 Diff adds the same 3-line block in two places:
 ```python
@@ -358,7 +359,7 @@ log.info("computed %s", result)
 return result
 ```
 
-**Karen does not flag.** Two occurrences. Rule of three says wait — extracting a helper for two callers (with the naming and indirection cost) likely costs more than it saves. Revisit if a third caller appears.
+**Karen flags:** DRY. Two copies are the limit: extract one helper with two callers. A third copy would make this a Should-fix.
 
 ### Example 3 — would flag (Critical)
 
